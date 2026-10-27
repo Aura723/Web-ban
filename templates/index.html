@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pairing Test Lab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-mark">PT</div>
+      <div>
+        <p class="eyebrow">LOCAL QA TOOL</p>
+        <h1>Pairing Test Lab</h1>
+      </div>
+      <span class="badge"><span class="dot"></span> Simulation mode</span>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">TEST DASHBOARD</p>
+        <h2>Validate your CSV before integration.</h2>
+        <p class="muted">Import authorized test numbers, validate international formatting, and inspect a local activity log. This demo does not contact WhatsApp or send pairing requests.</p>
+      </div>
+      <div class="hero-icon">⌁</div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages">
+          {% for category, message in messages %}
+            <div class="notice {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="stats">
+      <article class="stat-card"><span>Log entries</span><strong>{{ total }}</strong><small>Latest {{ logs|length }} events</small></article>
+      <article class="stat-card"><span>Validated (simulation)</span><strong>{{ success_count }}</strong><small>Local checks only</small></article>
+      <article class="stat-card"><span>Invalid / errors</span><strong>{{ failed_count }}</strong><small>Review the activity log</small></article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel upload-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">01 / IMPORT</p><h3>Upload phone list</h3></div>
+          <span class="step">CSV</span>
+        </div>
+        <p class="muted">CSV columns required: <code>phone_number</code> and <code>authorized</code>. Mark authorization as <code>yes</code> only when the number belongs to you or you have permission to test it.</p>
+        <div class="sample">
+          <div class="sample-head"><span>example.csv</span><span>UTF-8</span></div>
+          <pre>phone_number,authorized
++2348012345678,yes
++2348098765432,yes</pre>
+        </div>
+        <form action="{{ url_for('test_numbers') }}" method="post" enctype="multipart/form-data">
+          <label class="file-label" for="csv_file">
+            <span class="file-symbol">↑</span>
+            <span><strong>Choose a CSV file</strong><small>Maximum {{ max_rows }} authorized rows</small></span>
+          </label>
+          <input id="csv_file" name="csv_file" type="file" accept=".csv,text/csv" required>
+          <label class="check-row"><input type="checkbox" name="confirm_authorized" value="yes" required><span>I confirm these numbers are mine or explicitly authorized for testing.</span></label>
+          <button class="primary" type="submit">Validate CSV <span>→</span></button>
+        </form>
+      </article>
+
+      <article class="panel info-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">02 / CONFIGURATION</p><h3>Environment settings</h3></div>
+          <span class="step">.env</span>
+        </div>
+        <div class="config-row"><div><strong>MAX_ROWS</strong><small>Maximum accepted rows</small></div><code>{{ max_rows }}</code></div>
+        <div class="config-row"><div><strong>HOST</strong><small>Local development binding</small></div><code>127.0.0.1</code></div>
+        <div class="config-row"><div><strong>PORT</strong><small>Web server port</small></div><code>5000</code></div>
+        <div class="config-row"><div><strong>Mode</strong><small>External requests disabled</small></div><code class="green">SIMULATED</code></div>
+        <div class="tip"><span>✦</span><p><strong>Ready for local development</strong><br>See README.md for setup, environment configuration, and deployment notes.</p></div>
+      </article>
+    </section>
+
+    <section class="panel log-panel">
+      <div class="panel-heading log-heading">
+        <div><p class="eyebrow">03 / ACTIVITY</p><h3>Recent test log</h3></div>
+        <form action="{{ url_for('clear_logs') }}" method="post" onsubmit="return confirm('Clear all current log entries?')"><button class="secondary" type="submit">Clear logs</button></form>
+      </div>
+      {% if logs %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time (UTC)</th><th>Phone number</th><th>Status</th><th>Details</th></tr></thead>
+          <tbody>
+          {% for item in logs %}
+            <tr><td class="time">{{ item.time }}</td><td class="phone">{{ item.phone }}</td><td><span class="status {{ item.status|lower }}">{{ item.status }}</span></td><td>{{ item.detail }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty"><div class="empty-icon">⌁</div><strong>No activity yet</strong><p>Upload a CSV to run local validation.</p></div>
+      {% endif %}
+    </section>
+    <footer><span>Pairing Test Lab</span><span>Local QA · No external pairing requests</span></footer>
+  </main>
+</body>
+</html>
